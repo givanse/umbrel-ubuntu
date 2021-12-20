@@ -108,7 +108,6 @@ function installUmbrel() {
   log 'Install Umbrel '$UMBREL_VERSION
   mkdir -pv $umbrelFolder
   cd $umbrelFolder
-  #sudo chown -v umbrel:umbrel $umbrelFolder
   curl -L 'https://github.com/getumbrel/umbrel/archive/v'$UMBREL_VERSION'.tar.gz' | tar -xz --strip-components=1
 
   log 'copy services'
@@ -121,6 +120,10 @@ function installUmbrel() {
   sudo chmod 644 /etc/systemd/system/umbrel-*
 
   sudo systemctl enable umbrel-startup.service
+  sudo systemctl enable umbrel-connection-details.service
+  sudo systemctl enable umbrel-status-server-iptables-update.service
+  sudo systemctl enable umbrel-status-server.service
+  cd -
 }
 
 ##Execute######################################################################
@@ -135,17 +138,18 @@ manageDockerAsNonRoot
 
 installDockerCompose
 
-installUmbrel
-
 log 'verify Docker installation'
 newgrp docker << DOCKERPERMISSIONED
   set -e
   docker run hello-world
+  exit 0
 DOCKERPERMISSIONED
 
-log 'install completed, reboot to verify Umbrel starts on bootstrap'
+installUmbrel
 
-sudo systemctl start umbrel-startup.service
+sudo ./umbrel/scripts/start 
+
+log 'Install completed. If you like, reboot to verify Umbrel starts on bootstrap.'
 
 exit 0
 
